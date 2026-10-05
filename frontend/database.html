@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Database Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="main-content">
+        <div class="container">
+            <h2>User Database (Search & Delete)</h2>
+
+            <!-- Added Search Input -->
+            <div class="action-group">
+                <label for="skillSearch">Search Users by Skill:</label>
+                <input type="text" id="skillSearch" placeholder="e.g., Python, React, Java..." onkeyup="searchBySkill()">
+            </div>
+
+            <div id="dbStatus" class="status-message"></div>
+            <ul id="crudList" class="list-container"></ul>
+        </div>
+    </div>
+
+    <div id="navbar">
+        <div class="nav-links">
+            <a href="index.html">Register</a>
+            <a href="books.html">Books API</a>
+            <a href="database.html">Database</a>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:8000/users";
+
+        async function fetchUsers(skillQuery = "") {
+            const list = document.getElementById('crudList');
+            const status = document.getElementById('dbStatus');
+            list.innerHTML = '';
+
+            try {
+                // Append the skill query parameter if it exists
+                let url = API_URL;
+                if (skillQuery) {
+                    url += `?skill=${encodeURIComponent(skillQuery)}`;
+                }
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const users = await response.json();
+
+                if (users.length === 0) {
+                    list.innerHTML = '<li>No users found matching the criteria.</li>';
+                    return;
+                }
+
+                users.forEach(user => {
+                    const li = document.createElement('li');
+                    li.className = 'record-item';
+                    li.innerHTML = `
+                        <div>
+                            <strong>${user.fullName}</strong> (${user.firstName})<br>
+                            <small>${user.email} | ${user.phone}</small><br>
+                            <small><strong>Skills:</strong> ${user.skills}</small>
+                        </div>
+                        <div class="record-actions">
+                            <button onclick="deleteUser('${user.id}')" style="background-color: #d9534f;">Delete</button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+            } catch (error) {
+                status.textContent = 'Failed to load data. Is the backend running?';
+                status.classList.add('error-message');
+            }
+        }
+
+        function searchBySkill() {
+            const query = document.getElementById('skillSearch').value.trim();
+            fetchUsers(query);
+        }
+
+        async function deleteUser(id) {
+            if (!confirm('Permanently delete user?')) return;
+            try {
+                await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                // Re-fetch with the current search string to keep the view updated
+                searchBySkill();
+            } catch (error) {
+                alert('Error deleting user');
+            }
+        }
+
+        // Fetch all users on initial page load
+        window.onload = () => fetchUsers();
+    </script>
+</body>
+</html>

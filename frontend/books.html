@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Book API Fetch</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="main-content">
+        <div class="container">
+            <h2>Open Library Search</h2>
+            <div class="action-group">
+                <input type="text" id="searchInput" placeholder="Search by book title...">
+                <br><br>
+                <button id="searchBtn">Search External API</button>
+            </div>
+
+            <div id="loader" class="loader"></div>
+            <div id="apiStatus" class="status-message"></div>
+            <ul id="resultsList" class="list-container"></ul>
+        </div>
+    </div>
+
+    <div id="navbar">
+        <div class="nav-links">
+            <a href="index.html">Register</a>
+            <a href="books.html">Books API</a>
+            <a href="database.html">Database</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('searchBtn').addEventListener('click', async () => {
+            const query = document.getElementById('searchInput').value.trim();
+            const statusDiv = document.getElementById('apiStatus');
+            const loader = document.getElementById('loader');
+            const resultsList = document.getElementById('resultsList');
+
+            statusDiv.textContent = '';
+            resultsList.innerHTML = '';
+
+            if (!query) {
+                statusDiv.textContent = 'Please enter a title to search.';
+                statusDiv.classList.add('error-message');
+                return;
+            }
+
+            loader.style.display = 'block';
+
+            try {
+                const response = await fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(query)}&limit=5`);
+                if (!response.ok) throw new Error('API Error');
+                const data = await response.json();
+
+                loader.style.display = 'none';
+
+                if (data.docs && data.docs.length > 0) {
+                    data.docs.forEach(book => {
+                        const li = document.createElement('li');
+                        li.className = 'record-item';
+                        const author = book.author_name ? book.author_name[0] : 'Unknown Author';
+                        li.innerHTML = `<div><strong>${book.title}</strong><br><small>Author: ${author}</small></div>`;
+                        resultsList.appendChild(li);
+                    });
+                } else {
+                    statusDiv.textContent = 'No books found.';
+                    statusDiv.className = 'status-message';
+                }
+            } catch (error) {
+                loader.style.display = 'none';
+                statusDiv.textContent = 'Failed to fetch data from Open Library.';
+                statusDiv.classList.add('error-message');
+            }
+        });
+    </script>
+</body>
+</html>
