@@ -50,7 +50,7 @@
     </div>
 
     <script>
-        const API_URL = "http://localhost:8000/users";
+        const API_URL = "http://" + window.location.hostname + ":8000/users";
 
         document.getElementById('registrationForm').addEventListener('submit', async function(event) {
             event.preventDefault();
